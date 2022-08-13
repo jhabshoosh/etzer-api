@@ -1,0 +1,21 @@
+# data folder
+# Ignore everything
+#######################################
+/neo4j/**
+
+# gqlgen generated files
+generated.go
+models_gen.go
+
+# Misc
+vendor/
+.DS_Store
+mocks/
+*.gz
+*.bak
+*.log
+*.jar
+
+# Editors
+\.vscode/
+.idea

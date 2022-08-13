@@ -1,0 +1,20 @@
+type Person {
+  id: ID!
+  name: String!
+  father: Person
+  mother: Person
+  siblings: [Person!]
+  children: [Person!]
+}
+
+type Query {
+  persons: [Person!]!
+}
+
+input NewPerson {
+  name: String!
+}
+
+type Mutation {
+  createPerson(input: NewPerson!): Person!
+}
