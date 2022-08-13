@@ -7,8 +7,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jhabshoosh/etzer/graph/generated"
-	"github.com/jhabshoosh/etzer/graph/model"
+	"github.com/jhabshoosh/etzer-api/internal/graph/generated"
+	"github.com/jhabshoosh/etzer-api/internal/graph/model"
 )
 
 // CreatePerson is the resolver for the createPerson field.

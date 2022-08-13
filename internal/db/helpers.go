@@ -7,11 +7,6 @@ import (
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 )
 
-// ParseCypherQueryResult parses a cypher query result record and store the result in target interface
-//   - record: neo4j result record
-//   - alias: the alias used in cypher query (e.g. m.title)
-//   - target: target interface (e.g. models.Movie)
-//     Target object should a "db" tab (e.g. `db:"title"`)
 func ParseCypherQueryResult(record neo4j.Record, alias string, target interface{}) error {
 	elem := reflect.ValueOf(target).Elem()
 
