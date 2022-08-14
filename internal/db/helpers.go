@@ -13,7 +13,7 @@ func ParseCypherQueryResult(record neo4j.Record, alias string, target interface{
 	for i := 0; i < elem.Type().NumField(); i++ {
 		structField := elem.Type().Field(i)
 
-		tag := structField.Tag.Get("db")
+		tag := structField.Tag.Get("json")
 		fieldType := structField.Type
 		fieldName := structField.Name
 
@@ -31,7 +31,7 @@ func ParseCypherQueryResult(record neo4j.Record, alias string, target interface{
 				case "int64":
 					field.SetInt(val.(int64))
 				default:
-					return fmt.Errorf("Invalid type: %s", t)
+					return fmt.Errorf("invalid type: %s", t)
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 package graph
 
-import "github.com/jhabshoosh/etzer-api/internal/db"
+import "github.com/jhabshoosh/etzer-api/internal/services/person"
 
 type Resolver struct {
-	Neo4JDB db.Neo4JDB
+	PersonService person.PersonService
 }

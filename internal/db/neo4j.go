@@ -12,9 +12,10 @@ type Neo4JDB struct {
 	Connection neo4j.Driver
 }
 
-// NewNeo4jConnection creates a new neo4j connection
 func NewNeo4jConnection(protocol string, host string, port int, user string, password string) (neo4j.Driver, error) {
 	target := fmt.Sprintf("%s://%s:%d", protocol, host, port)
+
+	log.Printf("Attempting to connect to neo 4j at %s with user %s password %s", target, user, password)
 
 	driver, err := neo4j.NewDriver(
 		target,
@@ -22,6 +23,7 @@ func NewNeo4jConnection(protocol string, host string, port int, user string, pas
 		func(c *neo4j.Config) {
 			c.Encrypted = false
 		})
+
 	if err != nil {
 		log.Panic("Cannot connect to Neo4j Server", err)
 		return nil, err

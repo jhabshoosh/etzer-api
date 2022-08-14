@@ -3,18 +3,23 @@ type Person {
   name: String!
   father: Person
   mother: Person
-  siblings: [Person!]
-  children: [Person!]
 }
 
 type Query {
   persons: [Person!]!
 }
 
-input NewPerson {
+input CreatePersonInput {
   name: String!
 }
 
+input UpdateParentInput {
+  childId: ID!
+  parentId: ID!
+  parentType: String!
+}
+
 type Mutation {
-  createPerson(input: NewPerson!): Person!
+  createPerson(input: CreatePersonInput!): Person!
+  updateParent(input: UpdateParentInput!): ID!
 }
