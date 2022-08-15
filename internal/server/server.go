@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -19,37 +18,26 @@ import (
 type Server struct {
 	Router 			*mux.Router
 	PersonService 	person.PersonService
-	Env				config.Env
 }
 
 func Init() *Server {
 
-	env := config.GetEnv()
-
-	neo4Conn, err := db.NewNeo4jConnection("bolt", env.DBHost, env.DBPort, env.DBUser, env.DBPassword)
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-
-	neo4jDB := &db.Neo4JDB{
-		Connection: neo4Conn,
-	}
+	ogm := db.InitNeo4JOGM()
 	
 	personService := &person.PersonService{
-		Neo4jClient: *neo4jDB,
+		Ogm: *ogm,
 	}
 
 	return &Server{
 		PersonService: *personService,
-		Env: env,
 	}
 
 }
 
 // Run executes app
 func (a *Server) Run() {
-	addrStr := fmt.Sprintf("0.0.0.0:%s", strconv.Itoa(a.Env.Port))
+	env := config.GetEnv()
+	addrStr := fmt.Sprintf("0.0.0.0:%s", strconv.Itoa(env.Port))
 	log.Println("API Listening", "api_url", addrStr)
 	log.Fatal("Service failure", http.ListenAndServe(addrStr, a.Router))
 }

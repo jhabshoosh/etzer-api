@@ -8,31 +8,32 @@ import (
 
 	"github.com/jhabshoosh/etzer-api/internal/graph/generated"
 	"github.com/jhabshoosh/etzer-api/internal/graph/model"
+	"github.com/jhabshoosh/etzer-api/internal/models"
 )
 
 // CreatePerson is the resolver for the createPerson field.
-func (r *mutationResolver) CreatePerson(ctx context.Context, input model.CreatePersonInput) (*model.Person, error) {
+func (r *mutationResolver) CreatePerson(ctx context.Context, input model.CreatePersonInput) (*models.Person, error) {
 	return r.PersonService.CreatePerson(ctx, input)
 }
 
-// UpdateParent is the resolver for the updateParent field.
-func (r *mutationResolver) UpdateParent(ctx context.Context, input model.UpdateParentInput) (string, error) {
-	return r.PersonService.UpdateParent(ctx, input)
+// UpdateParents is the resolver for the updateParents field.
+func (r *mutationResolver) UpdateParents(ctx context.Context, input model.UpdateParentsInput) (string, error) {
+	return r.PersonService.UpdateParents(ctx, input)
 }
 
-// Father is the resolver for the father field.
-func (r *personResolver) Father(ctx context.Context, obj *model.Person) (*model.Person, error) {
-	return r.PersonService.GetParent(ctx, obj, "father")
+// Parents is the resolver for the parents field.
+func (r *personResolver) Parents(ctx context.Context, obj *models.Person) ([]*models.Person, error) {
+	return r.PersonService.Parents(ctx, obj)
 }
 
-// Mother is the resolver for the mother field.
-func (r *personResolver) Mother(ctx context.Context, obj *model.Person) (*model.Person, error) {
-	return r.PersonService.GetParent(ctx, obj, "mother")
+// Children is the resolver for the children field.
+func (r *personResolver) Children(ctx context.Context, obj *models.Person) ([]*models.Person, error) {
+	return r.PersonService.Children(ctx, obj)
 }
 
-// Persons is the resolver for the persons field.
-func (r *queryResolver) Persons(ctx context.Context) ([]*model.Person, error) {
-	return r.PersonService.FetchPersons(ctx)
+// GetPerson is the resolver for the getPerson field.
+func (r *queryResolver) GetPerson(ctx context.Context, input model.GetPersonInput) (*models.Person, error) {
+	return r.PersonService.GetPerson(ctx, input)
 }
 
 // Mutation returns generated.MutationResolver implementation.

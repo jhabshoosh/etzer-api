@@ -6,7 +6,7 @@
 # gqlgen generated files
 generated.go
 models_gen.go
-
+main
 # Misc
 vendor/
 .DS_Store

@@ -15,7 +15,6 @@ func main() {
 	os.Setenv("ETZER_DBUSER", "neo4j")
 	os.Setenv("ETZER_DBPASSWORD", "test")
 
-
 	srv := server.Init()
 	srv.InitRoutes()
 	srv.Run()
