@@ -19,7 +19,8 @@ input CreatePersonInput {
 
 input UpdateParentsInput {
   child: ID!
-  parents: [ID!]!
+  father: ID
+  mother: ID
 }
 
 type Mutation {

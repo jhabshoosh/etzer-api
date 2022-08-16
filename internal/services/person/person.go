@@ -9,47 +9,8 @@ import (
 )
 
 type PersonService struct {
-	Ogm		gogm.Gogm
+	Ogm gogm.Gogm
 }
-
-// func (ps *PersonService) FetchPersons(ctx context.Context) ([]*models.Person, error) {
-	// return nil, nil
-	// sess, err := ps.Neo4JOGM.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeRead})
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// sess.LoadAll()
-
-
-	// query := `
-	// 	match (p:Person) return p.id, p.name
-	// `
-
-	// session, err := ps.Neo4jClient.Connection.Session(neo4j.AccessModeRead)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer session.Close()
-
-	// result, err := session.Run(query, nil)
-	// if err != nil {
-	// 	log.Panic("Cannot find persons", err)
-	// }
-
-	// log.Println("CYPHER_QUERY", query)
-
-	// var persons []*models.Person
-
-	// for result.Next() {
-	// 	person := models.Person{}
-	// 	db.ParseCypherQueryResult(result.Record(), "p", &person)
-
-	// 	persons = append(persons, &person)
-	// }
-
-	// return persons, err
-// }
 
 func (ps *PersonService) CreatePerson(ctx context.Context, input model.CreatePersonInput) (*models.Person, error) {
 
@@ -60,7 +21,7 @@ func (ps *PersonService) CreatePerson(ctx context.Context, input model.CreatePer
 	defer sess.Close()
 
 	newPerson := &models.Person{
-		Name: 	input.Name,
+		Name: input.Name,
 	}
 
 	err = sess.Save(context.Background(), newPerson)
@@ -106,9 +67,16 @@ func (ps *PersonService) Parents(ctx context.Context, obj *models.Person) ([]*mo
 		panic(err)
 	}
 
-	return readin.Parents, err
+	return getParentsFromParentOf(readin.Parents), err
 }
 
+func getParentsFromParentOf(parentOf []*models.ParentOf) []*models.Person {
+	var parents []*models.Person
+	for _, p := range parentOf {
+		parents = append(parents, p.Parent)
+	}
+	return parents
+}
 
 func (ps *PersonService) Children(ctx context.Context, obj *models.Person) ([]*models.Person, error) {
 	sess, err := ps.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeRead})
@@ -123,7 +91,15 @@ func (ps *PersonService) Children(ctx context.Context, obj *models.Person) ([]*m
 		panic(err)
 	}
 
-	return readin.Children, err
+	return getChildrenFromParentOf(readin.Children), err
+}
+
+func getChildrenFromParentOf(parentOf []*models.ParentOf) []*models.Person {
+	var children []*models.Person
+	for _, p := range parentOf {
+		children = append(children, p.Child)
+	}
+	return children
 }
 
 func (ps *PersonService) UpdateParents(ctx context.Context, input model.UpdateParentsInput) (string, error) {
@@ -139,80 +115,38 @@ func (ps *PersonService) UpdateParents(ctx context.Context, input model.UpdatePa
 		panic(err)
 	}
 
-	for _, p := range input.Parents {
-		var parentPerson models.Person
-		err = sess.Load(context.Background(), &parentPerson, p)
+	if input.Father != nil {
+		var fatherPerson models.Person
+		err = sess.Load(context.Background(), &fatherPerson, input.Father)
 		if err != nil {
 			panic(err)
 		}
-		childPerson.LinkToPersonOnFieldParents(&parentPerson)
+		parentOf := models.ParentOf{
+			Parent:     &fatherPerson,
+			Child:      &childPerson,
+			ParentType: models.Father,
+		}
+		childPerson.LinkToPersonOnFieldParents(&fatherPerson, &parentOf)
+	}
+
+	if input.Mother != nil {
+		var motherPerson models.Person
+		err = sess.Load(context.Background(), &motherPerson, input.Mother)
+		if err != nil {
+			panic(err)
+		}
+		parentOf := models.ParentOf{
+			Parent:     &motherPerson,
+			Child:      &childPerson,
+			ParentType: models.Mother,
+		}
+		childPerson.LinkToPersonOnFieldParents(&motherPerson, &parentOf)
 	}
 
 	err = sess.Save(context.Background(), &childPerson)
 	if err != nil {
 		panic(err)
 	}
-	
+
 	return input.Child, err
 }
-
-// func (ps *PersonService) GetParent(ctx context.Context, child *models.Person, parentType string) (*models.Person, error) {
-// 	relationshipType := getParentRelationship(parentType)
-// 	query := fmt.Sprintf(`
-// 		MATCH (c:Person {id: $childId})<-[:%s]-(p:Person)
-// 	RETURN p
-// 	`, relationshipType)
-// 	parameters := map[string]interface{}{
-// 		"childId": child.ID,
-// 	}
-
-// 	session, err := ps.Neo4jClient.Connection.Session(neo4j.AccessModeRead)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer session.Close()	
-
-// 	result, err := session.Run(query, parameters)
-// 	if err != nil {
-// 		log.Panic("Cannot find parent", err)
-// 	}
-
-// 	log.Println("CYPHER_QUERY", query, parameters)
-
-// 	person := model.Person{}
-// 	result.Next()
-// 	db.ParseCypherQueryResult(result.Record(), "p", &person)
-
-// 	return &person, err
-// }
-
-// func (ps *PersonService) FindPersonByID(ctx context.Context, id string) (*model.Person, error) {
-// 	query := `
-// 		match (p:Person) where p.id = $id return p.id, p.name
-// 	`
-// 	session, err := r.Connection.Session(neo4j.AccessModeWrite)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer session.Close()
-
-// 	args := map[string]interface{}{
-// 		"id": id,
-// 	}
-
-// 	result, err := session.Run(query, args)
-
-// 	if err != nil {
-// 		log.Panic("Cannot find person by id", id, err)
-// 	}
-
-// 	log.Println("CYPHER_QUERY", query,  args)
-
-// 	person := models.Person{}
-	
-// 	for result.Next() {
-// 		ParseCypherQueryResult(result.Record(), "m", &person)
-// 	}
-
-// 	return &person, err
-// }

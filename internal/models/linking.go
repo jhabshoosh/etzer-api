@@ -5,123 +5,171 @@ import (
 	"errors"
 )
 
-// LinkToPersonOnFieldParents links Person to Person on the fields Person.Parents and Person.Children
-func (l *Person) LinkToPersonOnFieldParents(targets ...*Person) error {
-	if targets == nil {
+// LinkToPersonOnFieldParents links Person to Person on the fields Person.Parents and Person.Children.
+// note this uses the special edge ParentOf
+func (l *Person) LinkToPersonOnFieldParents(target *Person, edge *ParentOf) error {
+	if target == nil {
 		return errors.New("start and end can not be nil")
 	}
 
-	for _, target := range targets {
+	if edge == nil {
+		return errors.New("edge can not be nil")
+	}
 
-		if l.Parents == nil {
-			l.Parents = make([]*Person, 1)
-			l.Parents[0] = target
-		} else {
-			l.Parents = append(l.Parents, target)
+	err := edge.SetStartNode(target)
+	if err != nil {
+		return err
+	}
+
+	err = edge.SetEndNode(l)
+	if err != nil {
+		return err
+	}
+
+	if l.Parents == nil {
+		l.Parents = make([]*ParentOf, 1)
+		l.Parents[0] = edge
+	} else {
+		l.Parents = append(l.Parents, edge)
+	}
+
+	if target.Children == nil {
+		target.Children = make([]*ParentOf, 1)
+		target.Children[0] = edge
+	} else {
+		target.Children = append(target.Children, edge)
+	}
+
+	return nil
+}
+
+// UnlinkFromPersonOnFieldParents unlinks Person from Person on the fields Person.Parents and Person.Children.
+// also note this uses the special edge ParentOf
+func (l *Person) UnlinkFromPersonOnFieldParents(target *Person) error {
+	if target == nil {
+		return errors.New("start and end can not be nil")
+	}
+
+	if l.Parents != nil {
+		for i, unlinkTarget := range l.Parents {
+
+			obj := unlinkTarget.GetStartNode()
+
+			checkObj, ok := obj.(*Person)
+			if !ok {
+				return errors.New("unable to cast unlinkTarget to [*Person]")
+			}
+			if checkObj.UUID == target.UUID {
+				a := &l.Parents
+				(*a)[i] = (*a)[len(*a)-1]
+				(*a)[len(*a)-1] = nil
+				*a = (*a)[:len(*a)-1]
+				break
+			}
 		}
+	}
 
-		if target.Children == nil {
-			target.Children = make([]*Person, 1)
-			target.Children[0] = l
-		} else {
-			target.Children = append(target.Children, l)
+	if target.Children != nil {
+		for i, unlinkTarget := range target.Children {
+
+			obj := unlinkTarget.GetEndNode()
+
+			checkObj, ok := obj.(*Person)
+			if !ok {
+				return errors.New("unable to cast unlinkTarget to [*Person]")
+			}
+			if checkObj.UUID == l.UUID {
+				a := &target.Children
+				(*a)[i] = (*a)[len(*a)-1]
+				(*a)[len(*a)-1] = nil
+				*a = (*a)[:len(*a)-1]
+				break
+			}
 		}
 	}
 
 	return nil
 }
 
-//UnlinkFromPersonOnFieldParents unlinks Person from Person on the fields Person.Parents and Person.Children
-func (l *Person) UnlinkFromPersonOnFieldParents(targets ...*Person) error {
-	if targets == nil {
+// LinkToPersonOnFieldChildren links Person to Person on the fields Person.Children and Person.Parents.
+// note this uses the special edge ParentOf
+func (l *Person) LinkToPersonOnFieldChildren(target *Person, edge *ParentOf) error {
+	if target == nil {
 		return errors.New("start and end can not be nil")
 	}
 
-	for _, target := range targets {
+	if edge == nil {
+		return errors.New("edge can not be nil")
+	}
 
-		if l.Parents != nil {
-			for i, unlinkTarget := range l.Parents {
-				if unlinkTarget.UUID == target.UUID {
-					a := &l.Parents
-					(*a)[i] = (*a)[len(*a)-1]
-					(*a)[len(*a)-1] = nil
-					*a = (*a)[:len(*a)-1]
-					break
-				}
-			}
-		}
+	err := edge.SetStartNode(l)
+	if err != nil {
+		return err
+	}
 
-		if target.Children != nil {
-			for i, unlinkTarget := range target.Children {
-				if unlinkTarget.UUID == l.UUID {
-					a := &target.Children
-					(*a)[i] = (*a)[len(*a)-1]
-					(*a)[len(*a)-1] = nil
-					*a = (*a)[:len(*a)-1]
-					break
-				}
-			}
-		}
+	err = edge.SetEndNode(target)
+	if err != nil {
+		return err
+	}
+
+	if l.Children == nil {
+		l.Children = make([]*ParentOf, 1)
+		l.Children[0] = edge
+	} else {
+		l.Children = append(l.Children, edge)
+	}
+
+	if target.Parents == nil {
+		target.Parents = make([]*ParentOf, 1)
+		target.Parents[0] = edge
+	} else {
+		target.Parents = append(target.Parents, edge)
 	}
 
 	return nil
 }
 
-// LinkToPersonOnFieldChildren links Person to Person on the fields Person.Children and Person.Parents
-func (l *Person) LinkToPersonOnFieldChildren(targets ...*Person) error {
-	if targets == nil {
+// UnlinkFromPersonOnFieldChildren unlinks Person from Person on the fields Person.Children and Person.Parents.
+// also note this uses the special edge ParentOf
+func (l *Person) UnlinkFromPersonOnFieldChildren(target *Person) error {
+	if target == nil {
 		return errors.New("start and end can not be nil")
 	}
 
-	for _, target := range targets {
+	if l.Children != nil {
+		for i, unlinkTarget := range l.Children {
 
-		if l.Children == nil {
-			l.Children = make([]*Person, 1)
-			l.Children[0] = target
-		} else {
-			l.Children = append(l.Children, target)
-		}
+			obj := unlinkTarget.GetEndNode()
 
-		if target.Parents == nil {
-			target.Parents = make([]*Person, 1)
-			target.Parents[0] = l
-		} else {
-			target.Parents = append(target.Parents, l)
-		}
-	}
-
-	return nil
-}
-
-//UnlinkFromPersonOnFieldChildren unlinks Person from Person on the fields Person.Children and Person.Parents
-func (l *Person) UnlinkFromPersonOnFieldChildren(targets ...*Person) error {
-	if targets == nil {
-		return errors.New("start and end can not be nil")
-	}
-
-	for _, target := range targets {
-
-		if l.Children != nil {
-			for i, unlinkTarget := range l.Children {
-				if unlinkTarget.UUID == target.UUID {
-					a := &l.Children
-					(*a)[i] = (*a)[len(*a)-1]
-					(*a)[len(*a)-1] = nil
-					*a = (*a)[:len(*a)-1]
-					break
-				}
+			checkObj, ok := obj.(*Person)
+			if !ok {
+				return errors.New("unable to cast unlinkTarget to [*Person]")
+			}
+			if checkObj.UUID == target.UUID {
+				a := &l.Children
+				(*a)[i] = (*a)[len(*a)-1]
+				(*a)[len(*a)-1] = nil
+				*a = (*a)[:len(*a)-1]
+				break
 			}
 		}
+	}
 
-		if target.Parents != nil {
-			for i, unlinkTarget := range target.Parents {
-				if unlinkTarget.UUID == l.UUID {
-					a := &target.Parents
-					(*a)[i] = (*a)[len(*a)-1]
-					(*a)[len(*a)-1] = nil
-					*a = (*a)[:len(*a)-1]
-					break
-				}
+	if target.Parents != nil {
+		for i, unlinkTarget := range target.Parents {
+
+			obj := unlinkTarget.GetStartNode()
+
+			checkObj, ok := obj.(*Person)
+			if !ok {
+				return errors.New("unable to cast unlinkTarget to [*Person]")
+			}
+			if checkObj.UUID == l.UUID {
+				a := &target.Parents
+				(*a)[i] = (*a)[len(*a)-1]
+				(*a)[len(*a)-1] = nil
+				*a = (*a)[:len(*a)-1]
+				break
 			}
 		}
 	}

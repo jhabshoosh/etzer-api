@@ -15,15 +15,16 @@ import (
 	"github.com/jhabshoosh/etzer-api/internal/graph/generated"
 	"github.com/jhabshoosh/etzer-api/internal/services/person"
 )
+
 type Server struct {
-	Router 			*mux.Router
-	PersonService 	person.PersonService
+	Router        *mux.Router
+	PersonService person.PersonService
 }
 
 func Init() *Server {
 
 	ogm := db.InitNeo4JOGM()
-	
+
 	personService := &person.PersonService{
 		Ogm: *ogm,
 	}
