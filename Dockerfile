@@ -25,14 +25,6 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /server c
 # Create alpine runtime image
 FROM alpine:${ALPINE_VERSION} as server
 
-# Environment variables
-ENV ETZER_DEBUG 'TRUE'
-ENV ETZER_PORT '8080'
-ENV ETZER_NEO4J_HOST 'localhost'
-ENV ETZER_NEO4J_PORT '7687'
-ENV ETZER_NEO4J_USER 'neo4j'
-ENV ETZER_NEO4J_PASS 'test'
-
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /server /server
 
