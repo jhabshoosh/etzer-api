@@ -18,7 +18,7 @@ func InitNeo4JOGM() *gogm.Gogm {
 		Username:      env.DBUser,
 		Password:      env.DBPassword,
 		PoolSize:      50,
-		IndexStrategy: gogm.VALIDATE_INDEX, //other options are ASSERT_INDEX and IGNORE_INDEX
+		IndexStrategy: gogm.ASSERT_INDEX, //other options are ASSERT_INDEX and IGNORE_INDEX
 		TargetDbs:     nil,
 		// default logger wraps the go "log" package, implement the Logger interface from gogm to use your own logger
 		Logger: gogm.GetDefaultLogger(),
