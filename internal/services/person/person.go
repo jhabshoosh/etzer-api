@@ -150,3 +150,17 @@ func (ps *PersonService) UpdateParents(ctx context.Context, input model.UpdatePa
 
 	return input.Child, err
 }
+
+func (ps *PersonService) GetRootAncestor(ctx context.Context) (*models.Person, error) {
+	sess, err := ps.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeRead})
+	if err != nil {
+		panic(err)
+	}
+	defer sess.Close()
+
+	var readin models.Person
+	err = sess.Query(context.Background(), "MATCH (p:Person)WHERE NOT (p)<-[:parent_of]-(:Person) RETURN p", nil, &readin)
+
+	return &readin, err
+
+}

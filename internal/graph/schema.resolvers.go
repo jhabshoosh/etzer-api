@@ -36,6 +36,11 @@ func (r *queryResolver) GetPerson(ctx context.Context, input model.GetPersonInpu
 	return r.PersonService.GetPerson(ctx, input)
 }
 
+// GetRootAncestor is the resolver for the getRootAncestor field.
+func (r *queryResolver) GetRootAncestor(ctx context.Context) (*models.Person, error) {
+	return r.PersonService.GetRootAncestor(ctx)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

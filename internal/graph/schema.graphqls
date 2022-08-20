@@ -5,10 +5,6 @@ type Person {
   children: [Person!]
 }
 
-type Query {
-  getPerson(input: GetPersonInput!): Person!
-}
-
 input GetPersonInput {
   uuid: ID!
 }
@@ -21,6 +17,11 @@ input UpdateParentsInput {
   child: ID!
   father: ID
   mother: ID
+}
+
+type Query {
+  getPerson(input: GetPersonInput!): Person!
+  getRootAncestor: Person!
 }
 
 type Mutation {

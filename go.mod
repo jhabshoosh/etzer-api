@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.13
 	github.com/gorilla/mux v1.8.0
-	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mindstand/gogm/v2 v2.3.6
+	github.com/spf13/viper v1.12.0
 	github.com/vektah/gqlparser/v2 v2.4.7
 )
 
@@ -34,7 +34,6 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.12.0 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/urfave/cli/v2 v2.11.2 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
