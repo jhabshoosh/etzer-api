@@ -30,8 +30,7 @@ func Start() {
 	}
 
 	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	initMiddlewares(e)
 
 	srv := createServer(e, ps)
 
@@ -48,6 +47,12 @@ func createServer(e *echo.Echo, ps *person.PersonService) *handler.Server {
 	initTransports(srv)
 	initRoutes(e, srv)
 	return srv
+}
+
+func initMiddlewares(e *echo.Echo) {
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{}))
 }
 
 func initTransports(srv *handler.Server) {
