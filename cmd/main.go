@@ -7,8 +7,5 @@ import (
 
 func main() {
 	config.Init()
-
-	srv := server.Init()
-	srv.InitRoutes()
-	srv.Run()
+	server.Start()
 }
