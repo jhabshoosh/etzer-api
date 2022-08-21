@@ -164,3 +164,40 @@ func (ps *PersonService) GetRootAncestor(ctx context.Context) (*models.Person, e
 	return &readin, err
 
 }
+
+func (ps *PersonService) GetFamily(ctx context.Context) (*model.GetFamilyResponse, error) {
+	sess, err := ps.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeRead})
+	if err != nil {
+		panic(err)
+	}
+	defer sess.Close()
+
+	var readin []*models.Person
+	err = sess.Query(context.Background(), "MATCH (p:Person) RETURN p", nil, &readin)
+	if err != nil {
+		panic(err)
+	}
+
+	err = sess.LoadAll(context.Background(), &readin)
+	if err != nil {
+		panic(err)
+	}
+
+	response := &model.GetFamilyResponse{
+		Persons:       readin,
+		Relationships: make([]*model.Relationship, 0),
+	}
+
+	for _, p := range readin {
+		for _, c := range p.Children {
+			newRelationship := model.Relationship{
+				Parent: c.Parent.UUID,
+				Child:  c.Child.UUID,
+				Type:   string(c.ParentType),
+			}
+			response.Relationships = append(response.Relationships, &newRelationship)
+		}
+	}
+
+	return response, nil
+}

@@ -2,12 +2,27 @@
 
 package model
 
+import (
+	"github.com/jhabshoosh/etzer-api/internal/models"
+)
+
 type CreatePersonInput struct {
 	Name string `json:"name"`
 }
 
+type GetFamilyResponse struct {
+	Persons       []*models.Person `json:"persons"`
+	Relationships []*Relationship  `json:"relationships"`
+}
+
 type GetPersonInput struct {
 	UUID string `json:"uuid"`
+}
+
+type Relationship struct {
+	Parent string `json:"parent"`
+	Child  string `json:"child"`
+	Type   string `json:"type"`
 }
 
 type UpdateParentsInput struct {
