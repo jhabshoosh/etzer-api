@@ -6,6 +6,18 @@ import (
 	"github.com/jhabshoosh/etzer-api/internal/models"
 )
 
+type CreateChildInput struct {
+	ChildName  string `json:"childName"`
+	ParentID   string `json:"parentId"`
+	ParentType string `json:"parentType"`
+}
+
+type CreateParentInput struct {
+	ChildID    string `json:"childId"`
+	ParentName string `json:"parentName"`
+	ParentType string `json:"parentType"`
+}
+
 type CreatePersonInput struct {
 	Name string `json:"name"`
 }
@@ -20,9 +32,9 @@ type GetPersonInput struct {
 }
 
 type Relationship struct {
-	Parent string `json:"parent"`
-	Child  string `json:"child"`
-	Type   string `json:"type"`
+	Parent     string `json:"parent"`
+	Child      string `json:"child"`
+	ParentType string `json:"parentType"`
 }
 
 type UpdateParentsInput struct {

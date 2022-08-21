@@ -21,6 +21,16 @@ func (r *mutationResolver) UpdateParents(ctx context.Context, input model.Update
 	return r.PersonService.UpdateParents(ctx, input)
 }
 
+// CreateChild is the resolver for the createChild field.
+func (r *mutationResolver) CreateChild(ctx context.Context, input *model.CreateChildInput) (string, error) {
+	return r.PersonService.CreateChild(ctx, input)
+}
+
+// CreateParent is the resolver for the createParent field.
+func (r *mutationResolver) CreateParent(ctx context.Context, input *model.CreateParentInput) (string, error) {
+	return r.PersonService.CreateParent(ctx, input)
+}
+
 // Parents is the resolver for the parents field.
 func (r *personResolver) Parents(ctx context.Context, obj *models.Person) ([]*models.Person, error) {
 	return r.PersonService.Parents(ctx, obj)

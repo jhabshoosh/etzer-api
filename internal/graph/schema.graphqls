@@ -8,7 +8,7 @@ type Person {
 type Relationship {
 	parent: String!
 	child: String!
-  type: String!
+  parentType: String!
 }
 
 type GetFamilyResponse {
@@ -30,6 +30,18 @@ input UpdateParentsInput {
   mother: ID
 }
 
+input CreateChildInput {
+  childName: String!
+  parentId: ID!
+  parentType: String!
+}
+
+input CreateParentInput {
+  childId: ID!
+  parentName: String!
+  parentType: String!
+}
+
 type Query {
   getPerson(input: GetPersonInput!): Person!
   getRootAncestor: Person!
@@ -39,4 +51,6 @@ type Query {
 type Mutation {
   createPerson(input: CreatePersonInput!): Person!
   updateParents(input: UpdateParentsInput!): ID!
+  createChild(input: CreateChildInput): ID!
+  createParent(input: CreateParentInput): ID!
 }

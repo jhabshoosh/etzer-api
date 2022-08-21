@@ -191,13 +191,98 @@ func (ps *PersonService) GetFamily(ctx context.Context) (*model.GetFamilyRespons
 	for _, p := range readin {
 		for _, c := range p.Children {
 			newRelationship := model.Relationship{
-				Parent: c.Parent.UUID,
-				Child:  c.Child.UUID,
-				Type:   string(c.ParentType),
+				Parent:     c.Parent.UUID,
+				Child:      c.Child.UUID,
+				ParentType: string(c.ParentType),
 			}
 			response.Relationships = append(response.Relationships, &newRelationship)
 		}
 	}
 
 	return response, nil
+}
+
+func (ps *PersonService) CreateChild(ctx context.Context, input *model.CreateChildInput) (string, error) {
+	sess, err := ps.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeWrite})
+	if err != nil {
+		panic(err)
+	}
+	defer sess.Close()
+
+	newPersonId, err := ps.createNewPerson(sess, ctx, input.ChildName)
+	if err != nil {
+		panic(err)
+	}
+
+	var readin models.Person
+	err = sess.Load(context.Background(), &readin, newPersonId)
+	if err != nil {
+		panic(err)
+	}
+
+	if input.ParentType == "FATHER" {
+		updateParentsInput := &model.UpdateParentsInput{
+			Child:  newPersonId,
+			Father: &input.ParentID,
+		}
+		ps.UpdateParents(ctx, *updateParentsInput)
+	} else {
+		updateParentsInput := &model.UpdateParentsInput{
+			Child:  newPersonId,
+			Mother: &input.ParentID,
+		}
+		ps.UpdateParents(ctx, *updateParentsInput)
+
+	}
+
+	return newPersonId, err
+}
+
+func (ps *PersonService) CreateParent(ctx context.Context, input *model.CreateParentInput) (string, error) {
+	sess, err := ps.Ogm.NewSessionV2(gogm.SessionConfig{AccessMode: gogm.AccessModeWrite})
+	if err != nil {
+		panic(err)
+	}
+	defer sess.Close()
+
+	newPersonId, err := ps.createNewPerson(sess, ctx, input.ParentName)
+	if err != nil {
+		panic(err)
+	}
+
+	var readin models.Person
+	err = sess.Load(context.Background(), &readin, newPersonId)
+	if err != nil {
+		panic(err)
+	}
+
+	if input.ParentType == "FATHER" {
+		updateParentsInput := &model.UpdateParentsInput{
+			Child:  input.ChildID,
+			Father: &newPersonId,
+		}
+		ps.UpdateParents(ctx, *updateParentsInput)
+	} else {
+		updateParentsInput := &model.UpdateParentsInput{
+			Child:  input.ChildID,
+			Mother: &newPersonId,
+		}
+		ps.UpdateParents(ctx, *updateParentsInput)
+
+	}
+
+	return newPersonId, err
+}
+
+func (ps *PersonService) createNewPerson(sess gogm.SessionV2, ctx context.Context, name string) (string, error) {
+	newPerson := &models.Person{
+		Name: name,
+	}
+
+	err := sess.Save(context.Background(), newPerson)
+	if err != nil {
+		panic(err)
+	}
+
+	return newPerson.UUID, err
 }

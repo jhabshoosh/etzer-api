@@ -52,6 +52,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CreateChild   func(childComplexity int, input *model.CreateChildInput) int
+		CreateParent  func(childComplexity int, input *model.CreateParentInput) int
 		CreatePerson  func(childComplexity int, input model.CreatePersonInput) int
 		UpdateParents func(childComplexity int, input model.UpdateParentsInput) int
 	}
@@ -70,15 +72,17 @@ type ComplexityRoot struct {
 	}
 
 	Relationship struct {
-		Child  func(childComplexity int) int
-		Parent func(childComplexity int) int
-		Type   func(childComplexity int) int
+		Child      func(childComplexity int) int
+		Parent     func(childComplexity int) int
+		ParentType func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
 	CreatePerson(ctx context.Context, input model.CreatePersonInput) (*models.Person, error)
 	UpdateParents(ctx context.Context, input model.UpdateParentsInput) (string, error)
+	CreateChild(ctx context.Context, input *model.CreateChildInput) (string, error)
+	CreateParent(ctx context.Context, input *model.CreateParentInput) (string, error)
 }
 type PersonResolver interface {
 	Parents(ctx context.Context, obj *models.Person) ([]*models.Person, error)
@@ -118,6 +122,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GetFamilyResponse.Relationships(childComplexity), true
+
+	case "Mutation.createChild":
+		if e.complexity.Mutation.CreateChild == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createChild_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateChild(childComplexity, args["input"].(*model.CreateChildInput)), true
+
+	case "Mutation.createParent":
+		if e.complexity.Mutation.CreateParent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createParent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateParent(childComplexity, args["input"].(*model.CreateParentInput)), true
 
 	case "Mutation.createPerson":
 		if e.complexity.Mutation.CreatePerson == nil {
@@ -211,12 +239,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Relationship.Parent(childComplexity), true
 
-	case "Relationship.type":
-		if e.complexity.Relationship.Type == nil {
+	case "Relationship.parentType":
+		if e.complexity.Relationship.ParentType == nil {
 			break
 		}
 
-		return e.complexity.Relationship.Type(childComplexity), true
+		return e.complexity.Relationship.ParentType(childComplexity), true
 
 	}
 	return 0, false
@@ -226,6 +254,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCreateChildInput,
+		ec.unmarshalInputCreateParentInput,
 		ec.unmarshalInputCreatePersonInput,
 		ec.unmarshalInputGetPersonInput,
 		ec.unmarshalInputUpdateParentsInput,
@@ -299,7 +329,7 @@ var sources = []*ast.Source{
 type Relationship {
 	parent: String!
 	child: String!
-  type: String!
+  parentType: String!
 }
 
 type GetFamilyResponse {
@@ -321,6 +351,18 @@ input UpdateParentsInput {
   mother: ID
 }
 
+input CreateChildInput {
+  childName: String!
+  parentId: ID!
+  parentType: String!
+}
+
+input CreateParentInput {
+  childId: ID!
+  parentName: String!
+  parentType: String!
+}
+
 type Query {
   getPerson(input: GetPersonInput!): Person!
   getRootAncestor: Person!
@@ -330,6 +372,8 @@ type Query {
 type Mutation {
   createPerson(input: CreatePersonInput!): Person!
   updateParents(input: UpdateParentsInput!): ID!
+  createChild(input: CreateChildInput): ID!
+  createParent(input: CreateParentInput): ID!
 }
 `, BuiltIn: false},
 }
@@ -338,6 +382,36 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createChild_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.CreateChildInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOCreateChildInput2ᚖgithubᚗcomᚋjhabshooshᚋetzerᚑapiᚋinternalᚋgraphᚋmodelᚐCreateChildInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createParent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.CreateParentInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOCreateParentInput2ᚖgithubᚗcomᚋjhabshooshᚋetzerᚑapiᚋinternalᚋgraphᚋmodelᚐCreateParentInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createPerson_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -528,8 +602,8 @@ func (ec *executionContext) fieldContext_GetFamilyResponse_relationships(ctx con
 				return ec.fieldContext_Relationship_parent(ctx, field)
 			case "child":
 				return ec.fieldContext_Relationship_child(ctx, field)
-			case "type":
-				return ec.fieldContext_Relationship_type(ctx, field)
+			case "parentType":
+				return ec.fieldContext_Relationship_parentType(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Relationship", field.Name)
 		},
@@ -651,6 +725,116 @@ func (ec *executionContext) fieldContext_Mutation_updateParents(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateParents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createChild(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createChild(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateChild(rctx, fc.Args["input"].(*model.CreateChildInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createChild(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createChild_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createParent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createParent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateParent(rctx, fc.Args["input"].(*model.CreateParentInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createParent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createParent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1233,8 +1417,8 @@ func (ec *executionContext) fieldContext_Relationship_child(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Relationship_type(ctx context.Context, field graphql.CollectedField, obj *model.Relationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Relationship_type(ctx, field)
+func (ec *executionContext) _Relationship_parentType(ctx context.Context, field graphql.CollectedField, obj *model.Relationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Relationship_parentType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1247,7 +1431,7 @@ func (ec *executionContext) _Relationship_type(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return obj.ParentType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1264,7 +1448,7 @@ func (ec *executionContext) _Relationship_type(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Relationship_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Relationship_parentType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Relationship",
 		Field:      field,
@@ -3050,6 +3234,94 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateChildInput(ctx context.Context, obj interface{}) (model.CreateChildInput, error) {
+	var it model.CreateChildInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"childName", "parentId", "parentType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "childName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childName"))
+			it.ChildName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
+			it.ParentID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentType"))
+			it.ParentType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateParentInput(ctx context.Context, obj interface{}) (model.CreateParentInput, error) {
+	var it model.CreateParentInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"childId", "parentName", "parentType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "childId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childId"))
+			it.ChildID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentName"))
+			it.ParentName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentType"))
+			it.ParentType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreatePersonInput(ctx context.Context, obj interface{}) (model.CreatePersonInput, error) {
 	var it model.CreatePersonInput
 	asMap := map[string]interface{}{}
@@ -3219,6 +3491,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateParents(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createChild":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createChild(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createParent":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createParent(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -3439,9 +3729,9 @@ func (ec *executionContext) _Relationship(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "type":
+		case "parentType":
 
-			out.Values[i] = ec._Relationship_type(ctx, field, obj)
+			out.Values[i] = ec._Relationship_parentType(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -4150,6 +4440,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOCreateChildInput2ᚖgithubᚗcomᚋjhabshooshᚋetzerᚑapiᚋinternalᚋgraphᚋmodelᚐCreateChildInput(ctx context.Context, v interface{}) (*model.CreateChildInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCreateChildInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCreateParentInput2ᚖgithubᚗcomᚋjhabshooshᚋetzerᚑapiᚋinternalᚋgraphᚋmodelᚐCreateParentInput(ctx context.Context, v interface{}) (*model.CreateParentInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCreateParentInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
